@@ -1,0 +1,18 @@
+		var bus = RabbitHutch.CreateBus().Advanced;
+		var exchange = Exchange.DeclareTopic("RCC_RX");
+		var queue = Queue.DeclareDurable("Worker");
+		queue.BindTo(exchange, "Todo.#");
+
+		var eventStream = new Subject<TodoEvent>();
+		bus.Subscribe<TodoEvent>(queue, async (todoEventMessage, msgInfo) =>
+		{
+			eventStream.OnNext(todoEventMessage.Body);
+			Console.WriteLine("OnNext Complete");
+		});
+		
+		static void AwardAchievement(string message)
+        {
+            var client = new HttpClient();
+
+            client.PostAsJsonAsync("http://localhost:34669/api/achievement", new { message }).Wait();
+        }

@@ -1,0 +1,84 @@
+- Introduction
+	- Go over goals
+		- Track Todos
+		- Award achievements to users for activity
+	- Review design approach
+		- Event flow
+		- Roles of web & worker
+		- Why use rabbit
+	- Show github repo to follow along
+- I - Todo Persistence
+	- What's already done
+		- Backbone's todo app used as a starting point
+		- Rabbit running locally
+		- Nugets installed
+	- Add Todo model
+		- Id, Title, Order, Done
+		- JsonProperty w/ lowercase
+		- Build
+		- Add TodosController w/ crud actions on EF
+			- New Context against Todo model
+			- Copy line from context to global.asax
+		- DONT add return value to PUT
+		- Comment on /api/todos/ url in todos.js
+	- Show working
+	- Commit
+- II - Event Setup
+	- Rabbit Setup
+		- goto http://localhost:55672/#/
+		- Add topic exchange RCC_RX
+		- Add debug queue
+			- Remember routing key Todo.#
+	- Go over models project
+	- Add publish code to TodosController
+		- Add RaiseEvent(id, type) method
+		- Call in POST, PUT, DELETE
+	- Show working & events in Q
+	- Commit
+- III - Worker Setup
+	- Add rabbit subscription code
+		- Talk about durable vs transient
+	- Add code to create stream & first achievement
+		- Talk about subjects/IObservable/IObserver
+		- Talk about duality with IEnumerable, Push/Pull
+		- Talk about threading issues w/ the Q subscribe and the subject OnNext
+	- Show events coming in and displaying in console
+	- Commit
+- IV - Achievement Notifications
+	- Server
+		- Add Achievement model w/ message
+		- Add empty AchievementController
+		- Add POST
+			- Talk over the hub context
+			- Talk over the Clients.NewAchievement
+	- Client side
+		- Add hub reference
+		- Add subscription code, noting the method assignment & it's relation to the publish
+		- touch on toastr, show example from console window
+	- Worker
+		- Add AwardAchievement method
+		- Call it from the subscribe
+	- Show the whole flow!
+	- Commit
+- V - Open up to achievement suggestions & questions
+	- Go over more Rx operators
+		- Grouping by time
+			- Throttle - good for noisey streams, ignores extra events with a time frame
+			- Buffer - have to wait until values are collected before you get them
+			- Window - will recieve events as they are published
+		- Combining streams
+			- Concat - will publish second stream after first completes
+			- Amb - yields all of the first stream to publish a value
+			- Merge - publishes events as they are published from source streams
+			- SelectMany - does caretisan product, for every item in the first stream every 
+				item in the second stream will be publish in a pair {A, 1} {A, 2} {B, 1} {B, 2}
+			- Zip - publishes pairs of items as they occur, will not publish until both source streams have
+			- CombineLatest - Like zip but doesn't wait for next set of items but uses latest instead.
+	- Testing
+		- Observable.Interval
+		- Observable.Never
+		- TestScheduler - allows tests to run as fast as possible w/ retaining time semantics (things scheduled 1, 2, 3 hours from now will run now immediately after each other but in order)
+	- Achievements
+		- Finished 3 tasks in minute
+		- Added a task and finished it in a minute
+	

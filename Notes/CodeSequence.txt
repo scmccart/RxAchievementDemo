@@ -1,0 +1,107 @@
+----------------------------------------
+- Server Data
+----------------------------------------
+
+	public class Todo
+    {
+        [JsonProperty("id")]
+        public int Id { get; set; }
+
+        [JsonProperty("title")]
+        public string Title { get; set; }
+        [JsonProperty("done")]
+        public bool Done { get; set; }
+
+        [JsonProperty("order")]
+        public int Order { get; set; }
+    }
+
+----------------------------------------
+- Server Publish
+----------------------------------------
+
+	private static readonly IAdvancedBus s_bus = RabbitHutch.CreateBus().Advanced;
+	private static readonly IExchange s_exchange = Exchange.DeclareTopic("RCC_RX");
+	
+	void RaiseEvent(int id, EventType type)
+	{
+		var message = new Message<TodoEvent>(new TodoEvent()
+		{
+			Id = id,
+			Type = type
+		});
+
+		var routingKey = "Todo." + type.ToString();
+
+		using(var channel = s_bus.OpenPublishChannel())
+		{
+			channel.Publish(s_exchange, routingKey, message);
+		}
+	}
+
+----------------------------------------
+- Worker Subscription
+----------------------------------------
+
+	var bus = RabbitHutch.CreateBus().Advanced;
+	var exchange = Exchange.DeclareTopic("RCC_RX");
+	var queue = Queue.DeclareDurable("Worker");
+	queue.BindTo(exchange, "Todo.#");
+
+	var eventStream = new Subject<TodoEvent>();
+	bus.Subscribe<TodoEvent>(queue, async (todoEventMessage, msgInfo) =>
+	{
+		eventStream.OnNext(todoEventMessage.Body);
+		Console.WriteLine("OnNext Complete");
+	});
+
+----------------------------------------
+- Server Award & Signalr
+----------------------------------------
+
+	public class Notify : Hub
+    {
+    }
+	
+	public class AchievementController : ApiController
+    {
+        public HttpResponseMessage Post(Achievement achievement)
+        {
+            //TODO: Persist Achievement here.
+
+            var hubContext = GlobalHost.ConnectionManager.GetHubContext<Notify>();
+
+            hubContext.Clients.NewAchievement(achievement.Message);
+
+            return Request.CreateResponse(HttpStatusCode.Created);
+        }
+    }
+
+----------------------------------------
+- Worker Award
+----------------------------------------
+
+	static void AwardAchievement(string message)
+	{
+		var client = new HttpClient();
+
+		client.PostAsJsonAsync("http://localhost:34669/api/achievement", new { message }).Wait();
+	}
+
+----------------------------------------
+- Client Signalr
+----------------------------------------
+
+	<script type="text/javascript" src="/signalr/hubs"></script>
+
+    <script type="text/ecmascript">
+        $(function () {
+            var notifyHub = $.connection.notify;
+
+            notifyHub.NewAchievement = function (message) {
+                toastr.success(message);
+            };
+
+            $.connection.hub.start();
+        });
+    </script>

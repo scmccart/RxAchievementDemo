@@ -1,0 +1,17 @@
+	public class Notify : Hub
+    {
+    }
+	
+	public class AchievementController : ApiController
+    {
+        public HttpResponseMessage Post(Achievement achievement)
+        {
+            //TODO: Persist Achievement here.
+
+            var hubContext = GlobalHost.ConnectionManager.GetHubContext<Notify>();
+
+            hubContext.Clients.NewAchievement(achievement.Message);
+
+            return Request.CreateResponse(HttpStatusCode.Created);
+        }
+    }

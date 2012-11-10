@@ -1,0 +1,13 @@
+	<script type="text/javascript" src="/signalr/hubs"></script>
+
+    <script type="text/ecmascript">
+        $(function () {
+            var notifyHub = $.connection.notify;
+
+            notifyHub.NewAchievement = function (message) {
+                toastr.success(message);
+            };
+
+            $.connection.hub.start();
+        });
+    </script>

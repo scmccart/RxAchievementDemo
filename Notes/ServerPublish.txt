@@ -1,0 +1,19 @@
+
+        private static readonly IAdvancedBus s_bus = RabbitHutch.CreateBus().Advanced;
+        private static readonly IExchange s_exchange = Exchange.DeclareTopic("RCC_RX");
+		
+		void RaiseEvent(int id, EventType type)
+        {
+            var message = new Message<TodoEvent>(new TodoEvent()
+            {
+                Id = id,
+                Type = type
+            });
+
+            var routingKey = "Todo." + type.ToString();
+
+            using(var channel = s_bus.OpenPublishChannel())
+            {
+                channel.Publish(s_exchange, routingKey, message);
+            }
+        }

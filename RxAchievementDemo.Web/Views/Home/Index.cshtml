@@ -35,6 +35,19 @@
 
 @section Scripts {
     <script type="text/javascript" src="~/Scripts/todos.js"></script>
+    <script type="text/javascript" src="/signalr/hubs"></script>
+
+    <script type="text/javascript">
+        $(function () {
+            var notifyHub = $.connection.notify;
+
+            notifyHub.NewAchievement = function (msg) {
+                toastr.success(msg);
+            };
+
+            $.connection.hub.start();
+        });
+    </script>
 
     <script type="text/template" id="item-template">
         <div class="view">
